@@ -1,0 +1,106 @@
+pipeline {
+    agent { 
+        label 'master' 
+    }
+    parameters {
+        string (name: 'cluster', defaultValue: 'alpha-eks', description: 'This is the alpha-eks cluster name')
+        string (name: 'region', defaultValue: 'us-east-1', description: 'This is the alpha-eks cluster name')
+        // booleanParam (name: 'createKubeconfig', defaultValue: 'true', description: 'Create kube config')
+        choice (name: 'env', choices: '\ndev\nqa\nstg\nprod', description: 'environments')
+
+        string (name: 'name', defaultValue: 'Tankoua', description: 'name')
+        string (name: 'group', defaultValue: 'admin', description: 'group')
+        choice (name: 'directory', choices: '\ndev\nqa\nstg\nprod', description: 'directory')
+
+    }
+    stages {
+        stage('checkout') {
+            steps {
+                script {
+                    sh 'cat /etc/*release'
+                }
+            }
+        }
+         stage('printing parameters') {
+             steps {
+                 script {
+                     sh """
+                     echo 'The cluster name is: ${params.cluster}'
+                     echo 'The cluster region is: ${params.region}'
+                     echo 'The environment is: ${params.env}'
+                     echo 'region is: ${params.region}'
+                     echo 'group is: ${params.group}'
+                     echo 'directory is: ${params.directory}'
+                     """
+                 }
+             }
+         }
+         stage('users parameters') {
+             steps {
+                 script {
+                     sh """ 
+                     sudo groupadd ${params.group} 
+                     sudo useradd ${params.name} 
+                     sudo usermod -aG ${params.group} ${params.name} 
+                    
+                     cd /tmp 
+                     sudo mkdir ${params.directory} 
+
+                     cat /etc/passwd |grep ${params.name}
+                     cat /etc/group |grep ${params.group}
+
+                     ls -l /tmp
+                     """
+                 }
+             }
+         }
+        stage('package') {
+            steps {
+                script {
+                    sh """ 
+                    docker images
+                    docker ps
+                    """
+                }
+            }
+        }
+        stage('docker build') {
+            steps {
+                script {
+                    sh """ 
+                    pwd
+                    """
+                }
+            }
+        }
+        stage('push image') {
+            steps {
+                script {
+                    sh """ 
+                    ls
+                    """
+                }
+            }
+        }
+        stage('deploy') {
+            steps {
+                script {
+                    sh """ 
+                    echo 'Deploying to prod'
+                    """
+                }
+            }
+        }
+    }
+    post {
+      success {
+        echo 'Finish with success -------------------------------------------'
+      }
+      failure {
+        echo 'Finish with failure -------------------------------------------'
+      }
+      always {
+        echo 'This will always run -------------------------------------------'
+      }      
+    }
+}
